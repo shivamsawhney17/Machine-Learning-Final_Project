@@ -1,0 +1,194 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r warning=FALSE}
+
+# Importing the Libraries
+
+library(rvest)
+library(tidyverse)
+library(dplyr)
+library(xml2)
+
+```
+
+```{r}
+#Data Gathering
+
+'%notin%' <- Negate('%in%')
+
+u1="https://fbref.com/en/comps/9/2022-2023/2022-2023-Premier-League-Stats"
+u2="https://fbref.com/en/comps/9/2021-2022/2021-2022-Premier-League-Stats"
+u3="https://fbref.com/en/comps/9/2020-2021/2020-2021-Premier-League-Stats"
+u4="https://fbref.com/en/comps/9/2019-2020/2019-2020-Premier-League-Stats"
+u5="https://fbref.com/en/comps/9/2018-2019/2018-2019-Premier-League-Stats"
+u6="https://fbref.com/en/comps/9/2017-2018/2017-2018-Premier-League-Stats"
+u7="https://fbref.com/en/comps/9/2016-2017/2016-2017-Premier-League-Stats"
+u8="https://fbref.com/en/comps/9/2015-2016/2015-2016-Premier-League-Stats"
+u9="https://fbref.com/en/comps/9/2014-2015/2014-2015-Premier-League-Stats"
+u10="https://fbref.com/en/comps/9/2013-2014/2013-2014-Premier-League-Stats"
+u11="https://fbref.com/en/comps/9/2012-2013/2012-2013-Premier-League-Stats"
+
+```
+
+```{r}
+
+# PL Tables - England
+
+pl_tab_1 <- u1 %>% read_html %>% html_node('#results2022-202391_overall') %>% html_table()
+pl_tab_2 <- u2 %>% read_html %>% html_node('#results2021-202291_overall') %>% html_table()
+pl_tab_3 <- u3 %>% read_html %>% html_node('#results2020-202191_overall') %>% html_table()
+pl_tab_4 <- u4 %>% read_html %>% html_node('#results2019-202091_overall') %>% html_table()
+pl_tab_5 <- u5 %>% read_html %>% html_node('#results2018-201991_overall') %>% html_table()
+pl_tab_6 <- u6 %>% read_html %>% html_node('#results2017-201891_overall') %>% html_table()
+pl_tab_7 <- u7 %>% read_html %>% html_node('#results2016-201791_overall') %>% html_table()
+pl_tab_8 <- u8 %>% read_html %>% html_node('#results2015-201691_overall') %>% html_table()
+pl_tab_9 <- u9 %>% read_html %>% html_node('#results2014-201591_overall') %>% html_table()
+pl_tab_10 <- u10 %>% read_html %>% html_node('#results2013-201491_overall') %>% html_table()
+pl_tab_11 <- u11 %>% read_html %>% html_node('#results2012-201391_overall') %>% html_table()
+
+```
+
+
+```{r}
+
+#Data Cleaning and Data Prep
+
+pl_tab_1$Season = as.factor("2022-23")
+pl_tab_2$Season = as.factor("2021-22")
+pl_tab_3$Season = as.factor("2020-21")
+pl_tab_4$Season = as.factor("2019-20")
+pl_tab_5$Season = as.factor("2018-19")
+pl_tab_6$Season = as.factor("2017-18")
+pl_tab_7$Season = as.factor("2016-17")
+pl_tab_8$Season = as.factor("2015-16")
+pl_tab_9$Season = as.factor("2014-15")
+pl_tab_10$Season = as.factor("2013-14")
+pl_tab_11$Season = as.factor("2012-13")
+
+```
+
+```{r}
+
+pl_all_cols <- c(colnames(pl_tab_1),colnames(pl_tab_2), colnames(pl_tab_3), colnames(pl_tab_4), colnames(pl_tab_5), colnames(pl_tab_6), colnames(pl_tab_7), colnames(pl_tab_8), colnames(pl_tab_9), colnames(pl_tab_10), colnames(pl_tab_11)) %>% unique()
+
+pl_all_cols
+
+```
+
+```{r}
+
+x1_pl <- pl_all_cols %notin% colnames(pl_tab_11)
+mis_col1_pl <- pl_all_cols[x1_pl]
+
+x2_pl <- pl_all_cols %notin% colnames(pl_tab_2)
+mis_col2_pl <- pl_all_cols[x2_pl]
+
+```
+
+```{r}
+
+pl_tab_2[, mis_col2_pl] <- 0
+pl_tab_3[, mis_col2_pl] <- 0
+pl_tab_4[, mis_col2_pl] <- 0
+pl_tab_5[, mis_col2_pl] <- 0
+pl_tab_6[, mis_col2_pl] <- 0
+pl_tab_7[, mis_col1_pl] <- 0
+pl_tab_8[, mis_col1_pl] <- 0
+pl_tab_9[, mis_col1_pl] <- 0
+pl_tab_10[, mis_col1_pl] <- 0
+pl_tab_11[, mis_col1_pl] <- 0
+
+```
+
+
+```{r}
+
+pl_tab_1 <- pl_tab_1[pl_all_cols]
+pl_tab_2 <- pl_tab_2[pl_all_cols]
+pl_tab_3 <- pl_tab_3[pl_all_cols]
+pl_tab_4 <- pl_tab_4[pl_all_cols]
+pl_tab_5 <- pl_tab_5[pl_all_cols]
+pl_tab_6 <- pl_tab_6[pl_all_cols]
+pl_tab_7 <- pl_tab_7[pl_all_cols]
+pl_tab_8 <- pl_tab_8[pl_all_cols]
+pl_tab_9 <- pl_tab_9[pl_all_cols]
+pl_tab_10 <- pl_tab_10[pl_all_cols]
+pl_tab_11 <- pl_tab_11[pl_all_cols]
+
+```
+
+
+```{r}
+# Encapsulating data into one single place
+
+epl_data <- rbind(pl_tab_1, pl_tab_2, pl_tab_3, pl_tab_4, pl_tab_5, pl_tab_6, pl_tab_7, pl_tab_8, pl_tab_9, pl_tab_10, pl_tab_11)
+
+epl_data
+
+```
+
+
+```{r warning=F}
+
+#Data Viz and EDA
+
+
+epl_data  %>% ggplot(aes(Season, Rk, group=Squad, col=Squad)) + geom_point() + geom_line() +facet_wrap(~Squad) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + scale_y_reverse() + ggtitle("Finishing Position of Clubs across previous 11 seasons") + ylab("Finishing Position") + xlab("Season") + theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+```{r}
+
+df_1 <- epl_data %>% filter(Season !="2022-23") 
+df_1 <- slice_min(epl_data, GF,n= 10)
+df_1
+
+```
+
+
+```{r}
+
+df_1$Squad <- as.factor(df_1$Squad)
+
+df_1 %>% ggplot(aes(GF, Squad, col=Squad)) + geom_col() + geom_label(aes(label=GF)) + ggtitle("Teams with lowest goals scored in a season") + ylab("Team") + xlab("Goals scored 'For'") + theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+```{r}
+
+df_2 <- epl_data %>%slice_max(Pts)
+df_3 <- epl_data %>% slice_min(Pts)
+
+```
+
+```{r}
+
+epl_data %>% ggplot(aes(Squad, Pts, col=Squad)) + geom_col(data=df_2) + geom_col(data=df_3) +  geom_label(data=df_2, aes(label=Pts)) + geom_label(data=df_3, aes(label=Pts)) + ggtitle("Highest vs lowest points scored in a season") + ylab("Points") + xlab("Team") + theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+```{r}
+
+epl_data  %>% ggplot(aes(Season, Pts/MP, group=Squad, col=Squad)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + ggtitle("Points per Match distribution of teams across 11 seasons") + ylab("Points / Match") + xlab("Season") + theme(plot.title = element_text(hjust = 0.5))
+
+```
+```{r}
+
+mu_df <- epl_data %>% filter(Squad=="Manchester Utd")
+mu_df
+
+```
+
+```{r}
+
+mu_df %>% ggplot(aes(Pts)) + geom_density(fill="lightblue", alpha=0.65) + ggtitle("Points distrubution for Man Utd across 11 seaaons") + ylab("Points Density") + xlab("Points in a Season") + theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+```{r}
+
+mu_df %>% ggplot()+ geom_density(data=mu_df, aes(W), fill='lightgreen')  + geom_density(data=mu_df, aes(D), fill='yellow') + geom_density(data=mu_df, aes(L), fill='red', alpha=0.8) + ggtitle("Win, Loss & Draw distrubution for Man Utd across 11 seaaons") + labs(x = "Win / Loss / Draw count",y = "Density") + theme(plot.title = element_text(hjust = 0.5))
+
+```
