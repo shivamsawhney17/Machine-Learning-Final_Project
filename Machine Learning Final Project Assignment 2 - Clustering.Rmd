@@ -1,0 +1,221 @@
+---
+title: "k-means-final-project"
+author: "Shivam Sawhney"
+date: "2023-02-28"
+output: html_document
+---
+
+```{r warning=FALSE}
+
+#loading the required libraries
+
+library(ggplot2)
+library(cluster)
+library(factoextra)
+library(dplyr)
+library(gridExtra)
+library(ggeasy)
+
+```
+
+```{r}
+#loading the datasets
+
+d1 <- read.csv("Premier-League-Table-Stats.csv")
+d3 <- read.csv("Premier-League-Offense.csv")
+d4 <- read.csv("Bundesliga-Table-Stats.csv")
+d5 <- read.csv("La-Liga-Table-Stats.csv") 
+d6 <- read.csv("Ligue-1-Table-Stats.csv")
+d7 <- read.csv("Serie-A-Table-Stats.csv")
+
+
+```
+
+```{r}
+#Data manipulation and data transformation
+
+d1 <- d1[-c(1:2, 17, 19:21)]
+d1$Attendance <- as.numeric(gsub(",","",d1$Attendance))
+
+
+cd1 <- d1 %>%filter(Season=="2021-22")
+cd1 <- cd1[-c(2)]
+cd1_s <- scale(cd1[-c(1,15)])
+cd1_d <- dist(cd1[-c(1,15)])
+
+d3 <- d3[-c(1,4)]
+
+cd3 <- d3 %>%filter(Season=="2021-22")
+cd3_s <- scale(cd3[-c(1,20)])
+cd3_d <- dist(cd3[-c(1,20)])
+
+d4 <- d4[-c(1:2, 18:20)]
+d4$Attendance <- as.numeric(gsub(",","",d4$Attendance))
+
+
+cd4 <- d4 %>%filter(Season=="2021-22")
+cd4 <- cd4[-c(2)]
+cd4_s <- scale(cd4[-c(1,15)])
+cd4_d <- dist(cd4[-c(1,15)])
+
+d5 <- d5[-c(1:2,18:20)]
+d5$Attendance <- as.numeric(gsub(",","",d5$Attendance))
+
+
+cd5 <- d5 %>%filter(Season=="2021-22")
+cd5 <- cd5[-c(2)]
+cd5_s <- scale(cd5[-c(1,15)])
+cd5_d <- dist(cd5[-c(1,15)])
+
+d6 <- d6[-c(1:2, 18:20)]
+d6$Attendance <- as.numeric(gsub(",","",d6$Attendance))
+
+
+cd6 <- d6 %>%filter(Season=="2021-22")
+cd6 <- cd6[-c(2)]
+cd6_s <- scale(cd6[-c(1,15)])
+cd6_d <- dist(cd6[-c(1,15)])
+
+d7 <- d7[-c(1:2, 18:20)]
+d7$Attendance <- as.numeric(gsub(",","",d7$Attendance))
+
+
+cd7 <- d7 %>%filter(Season=="2021-22")
+cd7 <- cd7[-c(2)]
+cd7_s <- scale(cd7[-c(1,15)])
+cd7_d <- dist(cd7[-c(1,15)])
+
+
+```
+
+```{r}
+#Elbow Method
+
+#write.csv(cd1[-c(1,15)], "Clustering-Sample-Data-1.csv")
+
+fviz_nbclust(cd1_s, kmeans, method="wss") +  labs(subtitle = "Elbow Method") + labs(title="Optimal Number of clusters for Premier League")
+
+fviz_nbclust(cd4_s, kmeans, method="wss") +  labs(subtitle = "Elbow Method") + labs(title="Optimal Number of clusters for Bundesliga")
+
+fviz_nbclust(cd5_s, kmeans, method="wss") +  labs(subtitle = "Elbow Method") + labs(title="Optimal Number of clusters for La Liga")
+
+fviz_nbclust(cd6_s, kmeans, method="wss") +  labs(subtitle = "Elbow Method") + labs(title="Optimal Number of clusters for Ligue 1")
+
+fviz_nbclust(cd7_s, kmeans, method="wss") +  labs(subtitle = "Elbow Method") + labs(title="Optimal Number of clusters for Serie A")
+
+```
+
+```{r}
+#k-Means
+rownames(cd1_s) <- paste(cd1$Squad)
+kc1 <- kmeans(cd1_s, centers=3, nstart=100)
+
+rownames(cd4_s) <- paste(cd4$Squad)
+kc4 <- kmeans(cd4_s, centers=3, nstart=100)
+
+rownames(cd5_s) <- paste(cd5$Squad)
+kc5 <- kmeans(cd5_s, centers=3, nstart=100)
+
+rownames(cd6_s) <- paste(cd6$Squad)
+kc6 <- kmeans(cd6_s, centers=3, nstart=100)
+
+rownames(cd7_s) <- paste(cd7$Squad)
+kc7 <- kmeans(cd7_s, centers=3, nstart=100)
+
+```
+
+```{r}
+#Plot
+
+k5 <- fviz_cluster(list(data=cd1_s, cluster=kc1$cluster)) + ggtitle("Premier League (England) - Season 2021-22") + ggeasy::easy_center_title() + theme_bw()
+
+k6 <- fviz_cluster(list(data=cd4_s, cluster=kc4$cluster)) + ggtitle("Bundesliga (Germany) - Season 2021-22") + theme_bw()
+
+k7 <- fviz_cluster(list(data=cd5_s, cluster=kc5$cluster)) + ggtitle("La Liga (Spain) - Season 2021-22") + theme_bw()
+
+k8 <- fviz_cluster(list(data=cd6_s, cluster=kc6$cluster)) + ggtitle("Ligue 1 (France) - Season 2021-22") + theme_bw()
+
+k9 <- fviz_cluster(list(data=cd7_s, cluster=kc7$cluster)) + ggtitle("Serie A (Italy) - Season 2021-22") + theme_bw()
+
+
+```
+
+```{r}
+
+grid.arrange(k5,k6,k7,k8,k9, nrow=3)
+
+```
+
+```{r}
+
+fviz_nbclust(cd1_s, kmeans, method='silhouette') + labs(title="Optimal Number of clusters for Premier League", subtitle = "Silhouette Method")
+
+fviz_nbclust(cd4_s, kmeans, method='silhouette') + labs(title="Optimal Number of clusters for Bundesliga", subtitle = "Silhouette Method")
+
+fviz_nbclust(cd5_s, kmeans, method='silhouette') + labs(title="Optimal Number of clusters for La Liga", subtitle = "Silhouette Method")
+
+fviz_nbclust(cd6_s, kmeans, method='silhouette') + labs(title="Optimal Number of clusters for Ligue 1", subtitle = "Silhouette Method")
+
+fviz_nbclust(cd7_s, kmeans, method='silhouette') + labs(title="Optimal Number of clusters for Serie A", subtitle = "Silhouette Method")
+
+```
+
+```{r}
+
+# Compute cosine similarity matrix
+
+cos_sim <-  (as.matrix(scale(t(cd3[-c(1,20)]))))
+cos_dist = 1-crossprod(cos_sim) /(sqrt(colSums(cos_sim^2)%*%t(colSums(cos_sim^2))))
+# create dist object
+
+cos_dist <- as.dist(cos_dist) 
+
+# Perform hierarchical clustering with cosine similarity
+hc <- hclust(cos_dist, method = "ward.D")
+
+#Visualize
+plot(hc, labels = cd3$X.Squad)
+rect.hclust(hc, k=3, border = 2:5)
+
+
+
+```
+
+```{r}
+#Using complete method
+
+hc1 <- hclust(cd3_d, method = "complete")
+
+
+plot(hc1, labels = cd3$X.Squad)
+rect.hclust(hc, k=3, border = 2:5)
+
+```
+
+
+```{r}
+#Different Values of K
+
+k2 <- kmeans(cd1_s, centers=2, nstart=25)
+k3 <- kmeans(cd1_s, centers=3, nstart=25)
+k4 <- kmeans(cd1_s, centers=4, nstart=25)
+k5 <- kmeans(cd1_s, centers=5, nstart=25)
+
+```
+
+```{r}
+
+#Plot to compare
+
+p1 <- fviz_cluster(k2, geom = "point", data=cd1_s) + ggtitle("k=2")
+p2 <- fviz_cluster(k3, geom = "point", data=cd1_s) + ggtitle("k=3")
+p3 <- fviz_cluster(k4, geom = "point", data=cd1_s) + ggtitle("k=4")
+p4 <- fviz_cluster(k5, geom = "point", data=cd1_s) + ggtitle("k=5")
+
+```
+
+```{r}
+
+grid.arrange(p1,p2,p3,p4, nrow=2)
+
+```

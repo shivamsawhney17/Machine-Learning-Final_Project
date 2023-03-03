@@ -1,0 +1,75 @@
+---
+title: "apriori-final-project"
+author: "Shivam Sawhney"
+date: "2023-03-01"
+output: html_document
+---
+
+```{r}
+
+library(arules)
+library(arulesViz)
+library(ggplot2)
+library(cluster)
+library(factoextra)
+library(dplyr)
+library(gridExtra)
+library(rvest)
+library(tidyverse)
+library(dplyr)
+library(xml2)
+
+```
+
+
+```{r}
+
+tb2<- read.csv("Premier-League-Nationalities.csv")
+
+tb2 <- separate(data = tb2, col = Nation, into = c("N", "Nationality"), sep = " ")
+
+tb2_m <- tb2[c(2,4,5,6)]
+
+#write.csv(tb2_m, "Apriori-Sample-Data.csv")
+
+```
+
+
+```{r}
+
+rule2 <- apriori(tb2_m, parameter=list(support=0.01, confidence=0.1, minlen=2))
+inspect(head(rule2, 50))
+
+```
+
+
+```{r}
+
+inspect(head(sort(rule2, by="confidence"), 15))
+
+```
+
+```{r}
+
+inspect(head(sort(rule2, by="lift"), 15))
+
+```
+
+```{r}
+inspect(head(sort(rule2, by="support"), 15))
+
+```
+
+
+```{r}
+
+plot(rule2, method="grouped")
+
+```
+
+```{r}
+
+plot(rule2, method="matrix", measure=c("support", "lift"), shading = "confidence")
+
+```
+
