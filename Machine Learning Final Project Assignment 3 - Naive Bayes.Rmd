@@ -1,0 +1,170 @@
+---
+title: "naive-bayes"
+author: "Shivam Sawhney"
+date: "2023-03-10"
+output: html_document
+---
+
+```{r warning=FALSE}
+
+# Loading package
+library(e1071)
+library(caTools)
+library(caret)
+library(dplyr)
+library(gridExtra)
+library(class)
+'%notin%' <- Negate('%in%')
+
+```
+
+```{r}
+
+#Data cleaning and Data Prep
+
+d1 <- read.csv("Premier-League-Table-Stats.csv")
+d2 <- read.csv("La-Liga-Table-Stats.csv")
+d3 <- read.csv("Bundesliga-Table-Stats.csv")
+d4 <- read.csv("Serie-A-Table-Stats.csv")
+d5 <-read.csv("Ligue-1-Table-Stats.csv")
+d1$Notes <- ifelse( d1$Rk %in% c(1:4),  'UCL',ifelse( d1$Rk %in% c(18:20),  'Relegated', 'Regular'))
+d2$Notes <- ifelse( d2$Rk %in% c(1:4),  'UCL',ifelse( d2$Rk %in% c(18:20),  'Relegated', 'Regular'))
+d3$Notes <- ifelse( d3$Rk %in% c(1:4),  'UCL',ifelse( d3$Rk %in% c(19:20),  'Relegated', 'Regular'))
+d4$Notes <- ifelse( d4$Rk %in% c(1:4),  'UCL',ifelse( d4$Rk %in% c(18:20),  'Relegated', 'Regular'))
+d5$Notes <- ifelse( d5$Rk %in% c(1:2),  'UCL',ifelse( d5$Rk %in% c(17:20),  'Relegated', 'Regular'))
+
+dm1 <- d1[c(2:16, 21)]
+dm1 <- dm1[-c(1)]
+dm1$Notes <- as.factor(dm1$Notes)
+
+dm2 <- d2[c(2:16, 20)]
+dm2 <- dm2[-c(1)]
+dm2$Notes <- as.factor(dm2$Notes)
+
+dm3 <- d3[c(2:16, 20)]
+dm3 <- dm3[-c(1)]
+dm3$Notes <- as.factor(dm3$Notes)
+
+dm4 <- d4[c(2:16, 20)]
+dm4 <- dm4[-c(1)]
+dm4$Notes <- as.factor(dm4$Notes)
+
+dm5 <- d5[c(2:16, 20)]
+dm5 <- dm5[-c(1)]
+dm5$Notes <- as.factor(dm5$Notes)
+
+final_data <- as.data.frame(rbind(dm1,dm2,dm3,dm4,dm5))
+
+```
+
+
+```{r}
+# Splitting data into train and test data
+
+split <- sample.split(final_data, SplitRatio = 0.9)
+train_cl <- subset(final_data, split == "TRUE")
+test_cl <- subset(final_data, split == "FALSE")
+
+# Feature Scaling
+
+train_cl[, 2:11] <- scale(train_cl[, 2:11])
+test_cl[, 2:11]<- scale(test_cl[, 2:11])
+
+#Saving output file for sample data.
+
+write.csv(train_cl, "C:\\Users\\shiva\\OneDrive\\Documents\\Sem 2 - MS\\CSCI 5622-072 Machine Learning\\Final Project\\Sample_Train_Data_NB.csv")
+
+write.csv(test_cl, "C:\\Users\\shiva\\OneDrive\\Documents\\Sem 2 - MS\\CSCI 5622-072 Machine Learning\\Final Project\\Sample_Test_Data_NB.csv")
+
+```
+
+```{r}
+# Fitting Naive Bayes Model to training dataset
+
+set.seed(120) 
+classifier_cl <- naiveBayes(Notes ~ ., data = train_cl)
+ 
+# Predicting on test data'
+y_pred <- predict(classifier_cl, newdata = test_cl)
+ 
+# Confusion Matrix
+cm <- table(test_cl$Notes, y_pred)
+cm
+
+```
+
+```{r}
+
+# Model Evaluation
+confusionMatrix(data=as.factor(y_pred), reference=test_cl$Notes)
+
+```
+
+
+
+```{r}
+
+# Implementing KNN for Visualization purposes:
+
+knn_data <- as.data.frame(final_data[-c(1)])
+
+knn_train <- train_cl[-c(1)]
+knn_test <- test_cl[-c(1)]
+
+knn_train$Notes <- as.numeric(train_cl$Notes)
+knn_test$Notes <- as.numeric(test_cl$Notes)
+
+predictions <- knn(train = knn_train, test  = knn_test,cl = knn_train$Notes, k = 3)
+
+```
+
+```{r}
+
+# Creating a DF for ease of plotting
+
+plot_predictions <- data.frame(knn_test$Pts,knn_test$GD,knn_test$W,knn_test$L,knn_test$GF, knn_test$GA,predicted = predictions)
+colnames(plot_predictions) <- c("Points_Won", "Goal_Difference", "Wins", "Losses", "Goals_For","Goals_Agst","Predicted Class")
+
+```
+
+
+```{r}
+
+# Visualizations
+
+ggplot(plot_predictions, aes(Points_Won, Goal_Difference,color = `Predicted Class` , fill = `Predicted Class`)) + geom_point(size =2.5)  + ggtitle("Classification based on Goals and Points Won") + theme(plot.title = element_text(hjust =0.5))
+
+
+```
+
+```{r}
+
+ggplot(plot_predictions, aes(Losses, Wins,color = `Predicted Class` , fill = `Predicted Class`)) + geom_point(size =2.5)  + ggtitle("Classification based on Number of Losses and Win") + theme(plot.title = element_text(hjust =0.5))
+
+
+```
+
+```{r}
+
+ggplot(plot_predictions, aes(Goal_Difference, Losses,color = `Predicted Class` , fill = `Predicted Class`)) + geom_point(size =3)  + ggtitle("Classification based on Goal Difference and Losses") + theme(plot.title = element_text(hjust =0.5))
+
+```
+
+```{r}
+
+ggplot(plot_predictions, aes(Wins, Goals_For,color = `Predicted Class` , fill = `Predicted Class`)) + geom_point(size =3)  + ggtitle("Classification based on Goals Scored and Number of Wins") + theme(plot.title = element_text(hjust =0.5))
+
+```
+
+```{r}
+
+ggplot(plot_predictions, aes(Goals_Agst, Goals_For,color = `Predicted Class` , fill = `Predicted Class`)) + geom_point(size =3)  + ggtitle("Classification based on Goals Scored Goals Conceded") + theme(plot.title = element_text(hjust =0.5))
+
+```
+
+```{r}
+
+ggplot(plot_predictions, aes(Wins, Points_Won,color = `Predicted Class` , fill = `Predicted Class`)) + geom_point(size =3)  + ggtitle("Classification based on Number of Wins and Points Won") + theme(plot.title = element_text(hjust =0.5))
+
+```
+
