@@ -101,7 +101,7 @@ text(model, cex = 0.9)
 
 #Making Predictions
 
-pr <- predict(model, newdata = train_cl, type="class")
+pr <- predict(model, newdata = test_cl, type="class")
 
 ```
 
@@ -109,7 +109,7 @@ pr <- predict(model, newdata = train_cl, type="class")
 
 #Confusion matrix and accuracy
 
-confusionMatrix(table(pred = pr, true = train_cl$`Team Success (xG) xG+/-90`))
+confusionMatrix(table(pred = pr, true = test_cl$`Team Success (xG) xG+/-90`))
 
 ```
 
@@ -203,7 +203,7 @@ model_2 <- rpart(Att_Tch ~. , data = train_cl_2)
 
 #Making Predictions
 
-pr_2 <- predict(model_2, newdata = train_cl_2, type="class")
+pr_2 <- predict(model_2, newdata = test_cl_2, type="class")
 
 ```
 
@@ -211,7 +211,7 @@ pr_2 <- predict(model_2, newdata = train_cl_2, type="class")
 
 #Confusion Matrix and Accuracy
 
-confusionMatrix(table(pred = pr_2, true = train_cl_2$Att_Tch))
+confusionMatrix(table(pred = pr_2, true = test_cl_2$Att_Tch))
 
 ```
 
@@ -306,7 +306,7 @@ model_3 <- rpart(Att_Car ~. , data = train_cl_3)
 
 #Making Predictions
 
-pr_3 <- predict(model_3, newdata = train_cl_3, type="class")
+pr_3 <- predict(model_3, newdata = test_cl_3, type="class")
 
 ```
 
@@ -315,7 +315,7 @@ pr_3 <- predict(model_3, newdata = train_cl_3, type="class")
 
 #Confusion Matrix and Accuracy
 
-confusionMatrix(table(pred = pr_3, true = train_cl_3$Att_Car))
+confusionMatrix(table(pred = pr_3, true = test_cl_3$Att_Car))
 
 ```
 
