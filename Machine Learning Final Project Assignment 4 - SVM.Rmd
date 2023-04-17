@@ -1,0 +1,177 @@
+---
+title: "Machine Learning Final Project Assignment 4 - SVM"
+author: "Shivam Sawhney"
+date: "2023-04-13"
+output: html_document
+---
+
+```{r warning=FALSE}
+
+# Loading the required packages
+
+library(caTools)
+library(ggplot2)
+library(dplyr)
+library(gridExtra)
+library(readr)
+library(tidymodels)
+library(e1071)
+library(ISLR)
+library(kernlab)
+library(caret)
+
+'%notin%' <- Negate('%in%')
+theme_set(theme_bw(base_size = 16))
+
+```
+
+```{r warnings=FALSE}
+
+#Data Gathering, Cleaning and Prep
+
+d1 <- read_csv("Man_Utd_Results (1).csv",  show_col_types = FALSE)
+d2 <- read_csv("Man_Utd_Results (2).csv",  show_col_types = FALSE)
+d3 <- read_csv("Man_Utd_Results (3).csv",  show_col_types = FALSE)
+d4 <- read_csv("Man_Utd_Results (9).csv",  show_col_types = FALSE)
+d5 <- read_csv("Man_Utd_Results (10).csv",  show_col_types = FALSE)
+d6 <- read_csv("Man_Utd_Results (11).csv",  show_col_types = FALSE)
+
+dm1 <- d1[c(3, 5:9, 11:14)]
+dm2 <- d2[c(3, 5:9, 11:14)]
+dm3 <- d3[c(3, 5:9, 11:14)]
+dm4 <- d4[c(3, 5:9, 11:14)]
+dm5 <- d5[c(3, 5:9, 11:14)]
+dm6 <- d6[c(3, 5:9, 11:14)]
+
+df <- as.data.frame(rbind(dm1,dm2,dm3,dm4,dm5, dm6)) 
+
+df <- na.omit(df)
+
+df_m <- subset(df, Result!="D")
+df_m$Comp <- as.numeric(gsub("Premier League", 1, gsub("Champions Lg", 2, gsub("Europa Lg", 3, df_m$Comp))))
+
+df_m$Day <- as.numeric(gsub("Mon", 1, gsub("Tue", 2, gsub("Wed", 3, gsub("Thu", 4, gsub("Fri", 5, gsub("Sat", 6, gsub("Sun", 7, df_m$Day))))))))
+
+df_m$Venue <- as.numeric(gsub("Home", 1, gsub("Away", 2, df_m$Venue)))
+
+```
+
+```{r}
+
+#More Data Preprocessing
+
+df_m$Result <- as.factor(df_m$Result)
+df_m$GF <- as.numeric(df_m$GF)
+df_m$GA <- as.numeric(df_m$GA)
+str(df_m)
+
+df1 <- as.data.frame(scale(df_m[-c(4)]))
+df1$Result <- df_m$Result
+
+```
+
+
+
+```{r}
+
+#Checking for NAs
+
+sapply(df1, function(y) sum(length(which(is.na(y)))))
+
+```
+
+```{r}
+
+# Splitting data into train and test data
+
+split <- sample.split(df_m, SplitRatio = 0.9)
+train_cl <- subset(df1, split == "TRUE")
+test_cl <- subset(df1, split == "FALSE")
+
+# Exporting Samples of Testing and Training sets
+
+#(train_cl, "C:\\Users\\shiva\\OneDrive\\Documents\\Sem 2 - MS\\CSCI 5622-072 Machine Learning\\Final Project\\Sample_Training_Set_SVM.csv")
+
+#write.csv(test_cl, "C:\\Users\\shiva\\OneDrive\\Documents\\Sem 2 - MS\\CSCI 5622-072 Machine Learning\\Final Project\\Sample_Testing_Set_SVM.csv")
+
+```
+
+```{r}
+
+#Implementing SVM
+
+model <- svm(Result ~. , data = train_cl)
+summary(model)
+
+```
+
+
+```{r}
+
+#Making Predictions
+
+pr <- predict(model, test_cl)
+
+```
+
+```{r}
+
+#Confusion matrix and accuracy
+
+confusionMatrix(table(test_cl$Result, pr))
+
+```
+
+```{r}
+#Visualizing Results
+
+plot(model, df1,GA~Poss, color.palette=terrain.colors)
+plot(model, df1,GA~GF, color.palette=rainbow)
+plot(model, df1,xG~GF, color.palette=topo.colors)
+plot(model, df1,xG~xGA, color.palette=heat.colors)
+
+```
+
+```{r}
+
+# Trying a different Visualization
+
+svm_linear_spec <- svm_poly(degree=1) %>% set_mode("classification") %>% set_engine("kernlab", scaled = FALSE)
+
+svm_linear_fit <- svm_linear_spec %>% set_args(cost =0.1)%>% fit(Result ~ xGA + Poss, data=train_cl)
+
+svm_linear_fit %>% extract_fit_engine() %>% plot()
+
+```
+
+```{r}
+
+#Implementing Different SVM Kernels, with different cost functions
+
+# Set up a grid of cost and kernel values to try
+
+costs <- c(0.1, 1, 10)
+kernels <- c("linear", "polynomial", "radial")
+param_grid <- expand.grid(cost = costs, kernel = kernels)
+
+for (k in kernels) {
+  for (c in costs) {
+    # train the SVM model
+    model <- svm(Result ~ ., data = train_cl, kernel = k, cost = c)
+
+    # make predictions on the test set
+    predictions <- predict(model, test_cl)
+
+    # calculate the accuracy of the model
+    accuracy <- sum(predictions == test_cl$Result) / length(predictions)
+
+    # save the results
+    results <- rbind(accuracy, data.frame(kernel = k, cost = c, accuracy = accuracy))
+    
+    # print the confusion matrix
+    cat("\nKernel:", k, "\nCost:", c, "\n")
+    print(confusionMatrix(predictions, test_cl$Result))
+  }
+}
+
+```
